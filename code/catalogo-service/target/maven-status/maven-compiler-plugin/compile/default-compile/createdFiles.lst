@@ -1,7 +1,0 @@
-com/bootcamp/catalogo/CatalogoApplication.class
-com/bootcamp/catalogo/api/ApiUtil.class
-com/bootcamp/catalogo/controller/CatalogController.class
-com/bootcamp/catalogo/model/CatalogResponse.class
-com/bootcamp/catalogo/entity/CatalogEntity.class
-com/bootcamp/catalogo/repository/CatalogRepository.class
-com/bootcamp/catalogo/api/ApiApi.class

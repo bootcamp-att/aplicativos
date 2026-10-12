@@ -1,0 +1,6 @@
+com/bootcamp/pruebas/reporting/ExtentLogFilter.class
+com/bootcamp/pruebas/reporting/ExtentManager.class
+com/bootcamp/pruebas/tests/ProductosApiTest.class
+com/bootcamp/pruebas/config/BaseApiTest.class
+com/bootcamp/pruebas/config/TestConfig.class
+com/bootcamp/pruebas/reporting/ExtentReportExtension.class

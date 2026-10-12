@@ -1,0 +1,6 @@
+.openapi-generator-ignore
+README.md
+pom.xml
+src/main/java/com/bootcamp/descuento/api/ApiApi.java
+src/main/java/com/bootcamp/descuento/api/ApiUtil.java
+src/main/java/com/bootcamp/descuento/model/DiscountResponse.java

@@ -1,297 +1,390 @@
 # Migración de una tienda en línea a microservicios
 
-[![Java](https://img.shields.io/badge/Java-17-orange?logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Maven](https://img.shields.io/badge/Build-Apache%20Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
-[![Spring Boot](https://img.shields.io/badge/Framework-Spring%20Boot-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Architecture](https://img.shields.io/badge/Architecture-Microservices-blue)](https://microservices.io/)
-[![Migration Pattern](https://img.shields.io/badge/Pattern-Strangler%20Fig-2E7D32)](https://martinfowler.com/bliki/StranglerFigApplication.html)
+Repositorio de aplicaciones y pruebas del ejercicio de modernización de una tienda en línea del Bootcamp EspecializATT.
 
-Repositorio de código del Bootcamp EspecializATT para el ejercicio de
-modernización de una tienda en línea mediante la migración progresiva
-de un sistema monolítico hacia una arquitectura de microservicios.
+El proyecto aborda la separación de capacidades de negocio en microservicios, la definición de contratos de comunicación, la integración de servicios y la verificación de su comportamiento mediante pruebas automatizadas.
 
-El repositorio contiene los microservicios desarrollados durante la
-migración, proyectos de pruebas y documentación técnica relacionada
-con el ciclo de vida de desarrollo y la arquitectura de la solución.
+La solución toma como referencia el patrón arquitectónico **Strangler Fig** para contextualizar la migración progresiva de sistemas monolíticos hacia arquitecturas de microservicios.
+
+> **Alcance del proyecto:** este repositorio contiene los microservicios desarrollados durante el ejercicio, los proyectos de pruebas y la documentación técnica asociada. El sistema monolítico original no forma parte de la implementación desarrollada en el bootcamp.
 
 ## Tabla de contenidos
 
-- [1. Contexto del proyecto](#1-contexto-del-proyecto)
+- [1. Contexto](#1-contexto)
 - [2. Objetivos](#2-objetivos)
-- [3. Alcance del repositorio](#3-alcance-del-repositorio)
-- [4. Arquitectura de la solución](#4-arquitectura-de-la-solución)
-- [5. Componentes de la aplicación](#5-componentes-de-la-aplicación)
-- [6. Estrategia de pruebas](#6-estrategia-de-pruebas)
-- [7. Tecnologías](#7-tecnologías)
-- [8. Requisitos previos](#8-requisitos-previos)
-- [9. Instalación y compilación](#9-instalación-y-compilación)
-- [10. Ejecución de las pruebas](#10-ejecución-de-las-pruebas)
-- [11. Estructura del repositorio](#11-estructura-del-repositorio)
-- [12. Documentación técnica](#12-documentación-técnica)
-- [13. Seguridad](#13-seguridad)
-- [14. Referencias](#14-referencias)
+- [3. Alcance](#3-alcance)
+- [4. Arquitectura](#4-arquitectura)
+- [5. Flujo de una solicitud](#5-flujo-de-una-solicitud)
+- [6. Microservicios](#6-microservicios)
+- [7. Persistencia de datos](#7-persistencia-de-datos)
+- [8. Pruebas](#8-pruebas)
+- [9. Tecnologías](#9-tecnologías)
+- [10. Requisitos previos](#10-requisitos-previos)
+- [11. Instalación y compilación](#11-instalación-y-compilación)
+- [12. Ejecución de las pruebas](#12-ejecución-de-las-pruebas)
+- [13. Estructura del repositorio](#13-estructura-del-repositorio)
+- [14. Documentación técnica](#14-documentación-técnica)
+- [15. Consideraciones de seguridad](#15-consideraciones-de-seguridad)
+- [16. Referencias](#16-referencias)
 
-## 1. Contexto del proyecto
+## 1. Contexto
 
-El proyecto representa un escenario de modernización de una tienda
-en línea cuyo sistema original está implementado como una aplicación
-monolítica.
+Las aplicaciones monolíticas agrupan múltiples capacidades de negocio dentro de una misma unidad de despliegue. A medida que evolucionan, determinadas necesidades de escalabilidad, mantenimiento, autonomía de desarrollo e integración pueden motivar la separación de dichas capacidades en servicios independientes.
 
-El objetivo del ejercicio es extraer progresivamente capacidades
-del sistema existente y convertirlas en microservicios independientes,
-con contratos de comunicación definidos y mecanismos de verificación
-que permitan evaluar su comportamiento.
+Este proyecto utiliza el escenario de una tienda en línea para estudiar la organización de una aplicación basada en microservicios.
 
-La migración utiliza el patrón arquitectónico **Strangler Fig**,
-que permite introducir una nueva implementación de forma gradual
-mientras el sistema heredado continúa atendiendo las funcionalidades
-que todavía no han sido migradas.
+La solución separa las responsabilidades relacionadas con productos, catálogo y descuentos. Los servicios se comunican mediante interfaces HTTP y colaboran para construir la respuesta que recibe el consumidor de la API.
 
-Este enfoque permite reducir la necesidad de realizar una sustitución
-completa del sistema en una única liberación.
+La arquitectura utiliza Kong API Gateway como punto de entrada y Kubernetes para el enrutamiento hacia los servicios desplegados en el clúster.
+
+El patrón **Strangler Fig** se utiliza como referencia conceptual para contextualizar una posible estrategia de migración progresiva desde una aplicación monolítica hacia servicios independientes.
+
+El ejercicio se concentra en el desarrollo, integración y pruebas de los microservicios. No incluye la implementación del monolito original ni una migración funcional entre ambos sistemas.
 
 ## 2. Objetivos
 
-Los objetivos del ejercicio son:
+Los objetivos del proyecto son:
 
-- Separar capacidades de negocio en servicios con responsabilidades
-  específicas.
-- Definir contratos para la comunicación entre servicios.
-- Facilitar la compilación y verificación independiente de cada
-  microservicio.
-- Incorporar pruebas funcionales para comprobar el comportamiento
-  de las APIs.
-- Incorporar pruebas de rendimiento para evaluar el comportamiento
-  de los servicios bajo carga.
-- Documentar las decisiones de arquitectura y las consideraciones
-  de seguridad.
-- Proporcionar una base técnica para estudiar la migración progresiva
-  desde una arquitectura monolítica hacia microservicios.
+- Separar responsabilidades de negocio en microservicios.
+- Definir contratos de comunicación entre servicios.
+- Centralizar el acceso externo a la API mediante un API Gateway.
+- Utilizar Kubernetes Ingress para encaminar solicitudes hacia los servicios.
+- Separar la persistencia de los datos de catálogo y descuentos.
+- Integrar información procedente de distintos servicios para construir una respuesta de negocio.
+- Implementar pruebas funcionales para verificar el comportamiento de las APIs.
+- Incorporar pruebas de rendimiento para evaluar el comportamiento de los servicios bajo carga.
+- Documentar las decisiones arquitectónicas, las herramientas y las consideraciones de seguridad.
+- Proporcionar una base para estudiar los desafíos de modernización y migración de aplicaciones.
 
-## 3. Alcance del repositorio
+## 3. Alcance
 
-Este repositorio contiene los siguientes elementos:
+El repositorio contiene los siguientes componentes:
 
-- Código fuente de los microservicios de productos, catálogo
-  y descuentos.
-- Proyectos de pruebas funcionales y de rendimiento.
-- Pruebas de concepto relacionadas con funcionalidades y estrategias
-  de prueba.
-- Archivos de construcción Maven y configuración de calidad del código.
-- Dockerfiles para los microservicios que los incluyen.
-- Documentación técnica, decisiones de arquitectura y modelado
-  de amenazas.
+- Microservicio de productos.
+- Microservicio de catálogo.
+- Microservicio de descuentos.
+- Proyectos de pruebas funcionales.
+- Proyecto de pruebas de rendimiento.
+- Pruebas de concepto.
+- Configuración de construcción y dependencias Maven.
+- Dockerfiles para los servicios que los incluyen.
+- Configuración de herramientas de calidad de código en los módulos correspondientes.
+- Documentación técnica relacionada con el ciclo de vida de desarrollo, las decisiones de arquitectura y el modelado de amenazas.
 
 ### Fuera del alcance
 
-Este repositorio no debe considerarse, por sí solo, la solución
-completa de infraestructura y despliegue.
+El repositorio no contiene la implementación del sistema monolítico original ni demuestra una migración funcional entre un monolito y los nuevos servicios.
 
-La configuración de infraestructura, aprovisionamiento y despliegue
-se gestiona por separado.
+Tampoco debe considerarse, por sí solo, el repositorio completo de infraestructura y despliegue.
 
-Consulta el repositorio de infraestructura para conocer los recursos
-externos necesarios para desplegar e integrar los servicios.
+La infraestructura se gestiona de forma independiente. Los detalles de aprovisionamiento, configuración y despliegue deben consultarse en el repositorio correspondiente.
 
-## 4. Arquitectura de la solución
+## 4. Arquitectura
 
-### 4.1. Patrón Strangler Fig
+### 4.1. Vista general
 
-El patrón Strangler Fig permite sustituir progresivamente partes
-de una aplicación existente mediante la incorporación de nuevas
-implementaciones.
+La arquitectura está organizada alrededor de tres microservicios:
 
-En el escenario de este proyecto, una fachada de entrada puede
-dirigir las solicitudes correspondientes a capacidades migradas
-hacia los microservicios nuevos, mientras las funcionalidades
-pendientes de migración continúan atendidas por el sistema heredado.
+- `productos-service`
+- `catalogo-service`
+- `descuento-service`
 
-El proceso conceptual es el siguiente:
+Las solicitudes externas ingresan por Kong API Gateway y se encaminan mediante Kubernetes Ingress hacia `productos-service`.
 
-1. Identificar una capacidad de negocio dentro del monolito.
-2. Implementar su nueva versión como microservicio.
-3. Verificar su comportamiento mediante pruebas.
-4. Redirigir el tráfico correspondiente hacia la nueva implementación.
-5. Comprobar la integración y el comportamiento del sistema.
-6. Retirar la implementación heredada cuando se hayan satisfecho
-   los criterios de migración.
+Este servicio coordina las consultas a catálogo y descuentos, integra la información recibida y construye la respuesta de la API.
 
-La retirada de una funcionalidad del monolito debe realizarse
-después de verificar que la nueva implementación satisface
-los requisitos establecidos.
+Los servicios de catálogo y descuentos administran sus propios datos mediante bases de datos PostgreSQL independientes.
 
-### 4.2. Vista conceptual de la arquitectura
-
-El siguiente diagrama representa el enfoque de migración.
-No constituye un inventario de los recursos desplegados ni una
-descripción exhaustiva de la configuración actual.
+### 4.2. Diagrama de arquitectura
 
 ```mermaid
-flowchart TD
-    CLIENTE["Cliente de la tienda"]
+flowchart TB
+    CLIENTE["Cliente de la tienda<br/>Aplicación consumidora"]
 
-    subgraph MIGRACION["Entorno de migración"]
-        GATEWAY["Fachada de entrada<br/>API Gateway"]
-        LEGACY["Aplicación monolítica<br/>Funcionalidades pendientes"]
-        
-        subgraph SERVICIOS["Microservicios migrados"]
-            PRODUCTOS["productos-service"]
+    subgraph ENTRADA["Punto de entrada"]
+        KONG["Kong API Gateway"]
+    end
+
+    subgraph K8S["Clúster de Kubernetes"]
+        INGRESS["Kubernetes Ingress"]
+
+        subgraph APLICACIONES["Capa de aplicación"]
+            PRODUCTOS["productos-service<br/>Orquestación de consultas"]
             CATALOGO["catalogo-service"]
             DESCUENTOS["descuento-service"]
         end
 
-        PRUEBAS["Pruebas funcionales<br/>y de rendimiento"]
+        subgraph PERSISTENCIA["Capa de persistencia"]
+            DB_CATALOGO[("PostgreSQL<br/>Datos de catálogo")]
+            DB_DESCUENTOS[("PostgreSQL<br/>Datos de descuentos")]
+        end
+
+        INGRESS --> PRODUCTOS
+
+        PRODUCTOS -->|"Consulta de catálogo"| CATALOGO
+        PRODUCTOS -->|"Consulta de descuentos"| DESCUENTOS
+
+        CATALOGO --> DB_CATALOGO
+        DESCUENTOS --> DB_DESCUENTOS
     end
 
-    CLIENTE --> GATEWAY
+    CLIENTE -->|"Solicitud HTTP/HTTPS"| KONG
+    KONG -->|"Enrutamiento"| INGRESS
 
-    GATEWAY -->|"Capacidades migradas"| PRODUCTOS
-    GATEWAY -->|"Capacidades migradas"| CATALOGO
-    GATEWAY -->|"Capacidades migradas"| DESCUENTOS
+    CATALOGO -->|"Respuesta de catálogo"| PRODUCTOS
+    DESCUENTOS -->|"Respuesta de descuentos"| PRODUCTOS
 
-    GATEWAY -.->|"Capacidades pendientes"| LEGACY
-
-    PRUEBAS -.-> PRODUCTOS
-    PRUEBAS -.-> CATALOGO
-    PRUEBAS -.-> DESCUENTOS
+    PRODUCTOS -->|"Respuesta agregada"| INGRESS
+    INGRESS --> KONG
+    KONG --> CLIENTE
 ```
 
-**Nota:** las rutas de integración, la disponibilidad del sistema
-heredado y las relaciones entre los componentes deben verificarse
-con la configuración de despliegue correspondiente.
+**Nota:** el diagrama representa la arquitectura lógica descrita para el ejercicio. La ruta de retorno, los protocolos concretos y las reglas efectivas de enrutamiento deben contrastarse con la configuración de despliegue.
 
-### 4.3. Comunicación entre microservicios
+### 4.3. Responsabilidades de los componentes
 
-Los contratos de API permiten establecer las operaciones disponibles,
-los parámetros de entrada y los formatos de respuesta.
+**Kong API Gateway**
 
-Las especificaciones OpenAPI constituyen una referencia para
-documentar estos contratos y, cuando corresponda, generar interfaces
-y clientes HTTP.
+Constituye el punto de entrada para las solicitudes externas dirigidas a la API. Permite centralizar las políticas y el enrutamiento configurados en la puerta de enlace.
 
-La implementación de `productos-service` incluye configuración
-para generar interfaces de servidor y clientes a partir de
-especificaciones OpenAPI.
+**Kubernetes Ingress**
 
-Consulta los archivos de especificación y la configuración Maven
-de cada servicio para conocer los contratos efectivamente definidos.
+Define las reglas de entrada y enrutamiento HTTP(S) hacia los servicios publicados dentro del clúster.
 
-## 5. Componentes de la aplicación
+El comportamiento efectivo depende del controlador Ingress instalado y de las reglas configuradas.
 
-Los proyectos se encuentran organizados en el directorio `code/`.
+**productos-service**
 
-### 5.1. Microservicios
+Implementa el punto de entrada de negocio para las consultas de productos. Coordina las solicitudes a los servicios internos y consolida los datos necesarios para responder al consumidor.
 
-| Componente | Directorio | Responsabilidad |
-|---|---|---|
-| Productos | `code/productos-service/` | Capacidades relacionadas con productos. |
-| Catálogo | `code/catalogo-service/` | Capacidades relacionadas con la consulta del catálogo. |
-| Descuentos | `code/descuento-service/` | Capacidades relacionadas con los descuentos. |
+**catalogo-service**
 
-Cada microservicio cuenta con su propio `pom.xml` y se compila
-de forma independiente.
+Proporciona las operaciones relacionadas con la consulta y gestión de la información del catálogo, de acuerdo con su implementación.
 
-Los servicios que incluyen `Dockerfile` disponen de una definición
-para construir su imagen de contenedor.
+**descuento-service**
 
-### 5.2. Proyectos de prueba y pruebas de concepto
+Proporciona las operaciones relacionadas con la información de descuentos, de acuerdo con su implementación.
 
-| Proyecto | Directorio | Propósito |
-|---|---|---|
-| Pruebas funcionales | `code/pruebas-funcionales/` | Verificar el comportamiento de las APIs. |
-| Pruebas de rendimiento | `code/prueba-performance/` | Evaluar el comportamiento de los servicios bajo carga. |
-| PoC de pruebas funcionales | `code/poc-prueba-funcional/` | Explorar un enfoque de pruebas funcionales. |
-| PoC de IVA | `code/poc-iva/` | Implementar una prueba de concepto relacionada con el IVA. |
+**Bases de datos PostgreSQL**
 
-Los proyectos de prueba son independientes de los microservicios
-y pueden requerir una aplicación desplegada y accesible para ejecutarse.
+Almacenan los datos correspondientes a catálogo y descuentos. Cada servicio es responsable de acceder a su propia base de datos.
 
-## 6. Estrategia de pruebas
+## 5. Flujo de una solicitud
 
-Las pruebas permiten verificar las funcionalidades implementadas
-y evaluar aspectos específicos del comportamiento de los servicios.
+Para ilustrar la interacción entre los componentes, consideremos una solicitud de consulta de producto.
 
-### 6.1. Pruebas funcionales
+Ejemplo conceptual:
 
-El proyecto `pruebas-funcionales` utiliza REST Assured y JUnit 5,
-e incorpora ExtentReports como dependencia para la generación
-de informes.
+```http
+GET /api/v1/products/{id}
+```
 
-Su propósito es comprobar el comportamiento observable de las APIs,
-incluidas las respuestas y las condiciones definidas en los casos
-de prueba.
+La operación y la ruta definitivas deben consultarse en el contrato OpenAPI del servicio.
 
-La cobertura concreta depende de los escenarios implementados.
+El flujo es el siguiente:
 
-### 6.2. Pruebas de rendimiento
+1. **Solicitud del cliente.** La aplicación consumidora solicita los detalles de un producto.
+2. **Entrada por Kong.** Kong recibe la solicitud y aplica las reglas configuradas.
+3. **Enrutamiento en Kubernetes.** La solicitud llega al Ingress, que la dirige a `productos-service`.
+4. **Consulta del catálogo.** `productos-service` solicita la información necesaria a `catalogo-service`.
+5. **Consulta de descuentos.** `productos-service` solicita la información necesaria a `descuento-service`.
+6. **Acceso a los datos.** Los servicios internos consultan sus respectivas bases de datos PostgreSQL.
+7. **Respuesta de los servicios internos.** Catálogo y descuentos devuelven los datos solicitados a `productos-service`.
+8. **Integración de la respuesta.** `productos-service` combina la información conforme a la lógica de negocio implementada.
+9. **Respuesta al cliente.** La respuesta se devuelve a través de la ruta de entrada.
 
-El proyecto `prueba-performance` utiliza Gatling.
+Desde la perspectiva del consumidor, la consulta se realiza contra una única API de productos, aunque internamente implique la interacción con varios servicios.
 
-Este tipo de pruebas permite estudiar el comportamiento de los
-servicios bajo diferentes condiciones de carga.
+### 5.1. Contratos de comunicación
 
-Los escenarios, la concurrencia, la duración de las pruebas
-y los criterios de aceptación deben consultarse en la implementación
-correspondiente.
+Los contratos de API definen las operaciones disponibles, los parámetros, los esquemas de datos y las respuestas esperadas.
 
-Los resultados deben interpretarse considerando las características
-del entorno en el que se ejecutan.
+OpenAPI permite describir estas interfaces de manera independiente de su implementación.
 
-### 6.3. Pruebas de concepto
+La configuración Maven de `productos-service` contempla la generación de interfaces de servidor y clientes HTTP a partir de especificaciones OpenAPI.
 
-Los proyectos `poc-prueba-funcional` y `poc-iva` permiten explorar
-y validar enfoques específicos.
+Los contratos definitivos deben consultarse en los archivos de especificación de cada servicio.
 
-No deben interpretarse automáticamente como pruebas de aceptación
-de la solución completa.
+### 5.2. Dependencias entre servicios
 
-## 7. Tecnologías
+`productos-service` depende de las respuestas de catálogo y descuentos para construir la respuesta agregada.
 
-El proyecto utiliza las siguientes tecnologías, según la configuración
-de los módulos revisados:
+Esta relación introduce consideraciones de disponibilidad, latencia y manejo de errores.
 
-- **Java:** lenguaje de programación.
-- **Apache Maven:** gestión de dependencias y construcción.
-- **Spring Boot:** framework utilizado por `productos-service`.
-- **OpenAPI Generator:** generación de interfaces y clientes HTTP.
-- **REST Assured:** pruebas de APIs REST.
-- **JUnit 5:** ejecución de pruebas automatizadas.
-- **ExtentReports:** dependencia para la elaboración de informes.
-- **Gatling:** pruebas de rendimiento.
-- **Docker:** construcción de imágenes de los servicios que incluyen
-  un Dockerfile.
-- **Checkstyle:** comprobación de convenciones de código en los
-  módulos que lo configuran.
-- **CycloneDX Maven Plugin:** generación de un inventario de
-  componentes de software en los módulos que lo configuran.
-- **JaCoCo:** recopilación y generación de informes de cobertura
-  en los módulos que lo configuran.
+Entre los aspectos relevantes para la evolución del proyecto se encuentran:
 
-La disponibilidad de cada herramienta y su configuración efectiva
-dependen del módulo correspondiente.
+- Definir tiempos máximos de espera para las llamadas internas.
+- Establecer políticas de manejo de errores.
+- Evaluar la conveniencia de reintentos y circuit breakers.
+- Determinar el comportamiento cuando un servicio interno no está disponible.
+- Medir la latencia total de la operación.
+- Evitar dependencias innecesarias entre contratos.
 
-## 8. Requisitos previos
+La existencia de estas consideraciones no implica que todas las medidas estén implementadas actualmente.
 
-Para compilar los proyectos revisados se recomienda disponer de:
+## 6. Microservicios
+
+Los microservicios se encuentran en el directorio `code/`.
+
+### 6.1. productos-service
+
+**Directorio:** `code/productos-service/`
+
+Servicio responsable de exponer la API de productos y coordinar las consultas necesarias para obtener la información de catálogo y descuentos.
+
+Características relevantes:
+
+- Proyecto Maven independiente.
+- Código fuente Java.
+- Configuración de generación de interfaces y clientes a partir de OpenAPI.
+- Dockerfile para la construcción de una imagen de contenedor.
+- Configuración de herramientas de calidad de código.
+
+Para conocer las operaciones disponibles, consulta las especificaciones OpenAPI y la implementación del servicio.
+
+### 6.2. catalogo-service
+
+**Directorio:** `code/catalogo-service/`
+
+Microservicio responsable de las operaciones relacionadas con el catálogo de productos.
+
+Características relevantes:
+
+- Proyecto Maven independiente.
+- Código fuente Java.
+- Dockerfile para la construcción de una imagen de contenedor.
+- Configuración de Checkstyle.
+- Persistencia mediante PostgreSQL en la arquitectura del ejercicio.
+
+Las operaciones y los modelos de datos concretos deben consultarse en el código fuente y los contratos del servicio.
+
+### 6.3. descuento-service
+
+**Directorio:** `code/descuento-service/`
+
+Microservicio responsable de las operaciones relacionadas con los descuentos.
+
+Características relevantes:
+
+- Proyecto Maven independiente.
+- Código fuente Java.
+- Dockerfile para la construcción de una imagen de contenedor.
+- Configuración de Checkstyle.
+- Persistencia mediante PostgreSQL en la arquitectura del ejercicio.
+
+Las reglas de negocio y los contratos concretos deben consultarse en el código fuente del servicio.
+
+## 7. Persistencia de datos
+
+La arquitectura utiliza PostgreSQL para la persistencia de los datos de catálogo y descuentos.
+
+Cada servicio administra sus propios datos:
+
+- `catalogo-service` accede a la base de datos del catálogo.
+- `descuento-service` accede a la base de datos de descuentos.
+
+`productos-service` consume las interfaces de los servicios internos para obtener información. No necesita consultar directamente sus bases de datos.
+
+Este enfoque permite separar las responsabilidades de negocio y reducir el acoplamiento entre los servicios y sus modelos de persistencia.
+
+La separación lógica de responsabilidades no determina, por sí sola, si las bases de datos se ejecutan en servidores distintos o comparten una misma instancia de PostgreSQL. Ese detalle depende de la configuración de infraestructura.
+
+## 8. Pruebas
+
+El repositorio incluye proyectos para verificar el comportamiento de las APIs y evaluar aspectos del rendimiento.
+
+### 8.1. Pruebas funcionales
+
+**Directorio:** `code/pruebas-funcionales/`
+
+El proyecto utiliza REST Assured y JUnit 5, e incorpora ExtentReports como dependencia para la elaboración de informes.
+
+Su propósito es validar el comportamiento observable de las APIs mediante solicitudes HTTP y aserciones sobre las respuestas.
+
+La cobertura efectiva depende de los escenarios implementados en el código de pruebas.
+
+### 8.2. Pruebas de rendimiento
+
+**Directorio:** `code/prueba-performance/`
+
+El proyecto utiliza Gatling para ejecutar escenarios de rendimiento.
+
+Estas pruebas permiten evaluar el comportamiento de los servicios bajo diferentes condiciones de carga.
+
+Entre las métricas que pueden resultar relevantes se encuentran:
+
+- Tiempo de respuesta.
+- Latencia percentil.
+- Tasa de solicitudes procesadas.
+- Porcentaje de errores.
+- Comportamiento bajo concurrencia.
+
+Las métricas obtenidas y los criterios de aceptación deben documentarse a partir de las simulaciones y los resultados reales.
+
+### 8.3. Pruebas de concepto
+
+El repositorio contiene dos proyectos adicionales:
+
+**`code/poc-prueba-funcional/`**
+
+Proyecto de prueba de concepto relacionado con las pruebas funcionales.
+
+**`code/poc-iva/`**
+
+Proyecto de prueba de concepto relacionado con el IVA.
+
+Estos módulos se mantienen separados de los microservicios principales para facilitar la experimentación sin mezclar sus objetivos con los de la aplicación.
+
+### 8.4. Alcance de las pruebas
+
+La existencia de un proyecto de pruebas no implica que todas las funcionalidades estén cubiertas ni que se hayan alcanzado determinados objetivos de calidad.
+
+La cobertura, los escenarios, las condiciones de ejecución y los resultados deben verificarse mediante el código y los informes generados.
+
+## 9. Tecnologías
+
+Las tecnologías utilizadas o configuradas en los proyectos incluyen:
+
+| Tecnología | Propósito |
+|---|---|
+| Java | Desarrollo de los servicios y proyectos de pruebas. |
+| Apache Maven | Gestión de dependencias y construcción de los proyectos. |
+| Spring Boot | Framework utilizado por `productos-service`. |
+| OpenAPI | Descripción de los contratos de API. |
+| OpenAPI Generator | Generación de interfaces y clientes HTTP. |
+| REST Assured | Pruebas de APIs REST. |
+| JUnit 5 | Ejecución de pruebas automatizadas. |
+| ExtentReports | Elaboración de informes de pruebas. |
+| Gatling | Pruebas de rendimiento. |
+| Docker | Construcción de imágenes de contenedor. |
+| Checkstyle | Verificación de convenciones de código. |
+| PostgreSQL | Persistencia de datos de catálogo y descuentos. |
+| Kong API Gateway | Punto de entrada y enrutamiento de solicitudes. |
+| Kubernetes | Orquestación de contenedores. |
+| Kubernetes Ingress | Enrutamiento de tráfico hacia los servicios del clúster. |
+
+La configuración y disponibilidad de cada tecnología dependen del módulo y del entorno de despliegue.
+
+## 10. Requisitos previos
+
+Para compilar los proyectos Java se recomienda disponer de:
 
 - JDK 17.
 - Apache Maven compatible con los proyectos.
 - Git.
-- Acceso a los repositorios Maven necesarios para descargar
-  las dependencias.
+- Acceso a los repositorios Maven necesarios para descargar las dependencias.
 
-Para construir y ejecutar contenedores también se requiere Docker
-o una herramienta compatible, como Podman.
+Para construir imágenes se requiere Docker o una herramienta compatible, como Podman.
 
-Para ejecutar las pruebas funcionales de integración se necesita
-acceso al servicio que se desea evaluar.
+Para ejecutar las pruebas funcionales de integración se necesita acceso al entorno en el que estén desplegados los servicios.
 
-Antes de ejecutar cualquier módulo, verifica su `pom.xml` y sus
-archivos de configuración para confirmar los requisitos específicos.
+Para ejecutar pruebas de rendimiento se necesita un entorno autorizado y con capacidad suficiente para soportar la carga prevista.
 
-## 9. Instalación y compilación
+Verifica los archivos `pom.xml` de cada módulo para confirmar sus requisitos específicos.
 
-### 9.1. Clonar el repositorio
+## 11. Instalación y compilación
+
+### 11.1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/bootcamp-att/aplicativos.git
@@ -299,7 +392,7 @@ git clone https://github.com/bootcamp-att/aplicativos.git
 cd aplicativos
 ```
 
-### 9.2. Verificar las herramientas
+### 11.2. Verificar Java y Maven
 
 ```bash
 java -version
@@ -307,33 +400,67 @@ java -version
 mvn -version
 ```
 
-Comprueba que Maven utiliza la versión del JDK esperada.
+Comprueba que Maven utiliza el JDK esperado por los proyectos.
 
-### 9.3. Compilar un microservicio
+### 11.3. Compilar los microservicios
 
-Por ejemplo, para compilar `productos-service`:
+Cada microservicio tiene su propio proyecto Maven.
+
+Para compilar `productos-service`:
 
 ```bash
 mvn -f code/productos-service/pom.xml clean verify
 ```
 
-Para compilar los otros microservicios:
+Para compilar `catalogo-service`:
 
 ```bash
 mvn -f code/catalogo-service/pom.xml clean verify
+```
 
+Para compilar `descuento-service`:
+
+```bash
 mvn -f code/descuento-service/pom.xml clean verify
 ```
 
-Estos comandos ejecutan el ciclo de construcción y verificación
-de Maven configurado para cada módulo.
+El objetivo `verify` ejecuta las fases anteriores del ciclo de vida Maven y las comprobaciones configuradas para cada módulo.
 
-El resultado dependerá de que las dependencias estén disponibles
-y de que el código y las pruebas finalicen correctamente.
+El resultado depende de la disponibilidad de las dependencias, la configuración del proyecto y el resultado de las pruebas.
 
-### 9.4. Construir una imagen de contenedor
+### 11.4. Compilar los proyectos de pruebas
 
-Para construir la imagen de `productos-service`:
+Pruebas funcionales:
+
+```bash
+mvn -f code/pruebas-funcionales/pom.xml clean verify
+```
+
+Pruebas de rendimiento:
+
+```bash
+mvn -f code/prueba-performance/pom.xml clean verify
+```
+
+Prueba de concepto funcional:
+
+```bash
+mvn -f code/poc-prueba-funcional/pom.xml clean verify
+```
+
+Prueba de concepto de IVA:
+
+```bash
+mvn -f code/poc-iva/pom.xml clean verify
+```
+
+Estos comandos permiten verificar los módulos individualmente. No sustituyen la ejecución de pruebas de integración contra un entorno desplegado.
+
+### 11.5. Construir una imagen de contenedor
+
+Los microservicios que incluyen un Dockerfile pueden construirse individualmente.
+
+Ejemplo para `productos-service`:
 
 ```bash
 docker build \
@@ -341,211 +468,247 @@ docker build \
   code/productos-service
 ```
 
-Este comando construye la imagen utilizando el Dockerfile del
-microservicio.
+Ejemplo para `catalogo-service`:
 
-Para ejecutar el contenedor, consulta la configuración del servicio
-y determina el puerto de escucha y las variables de entorno necesarias.
+```bash
+docker build \
+  -t catalogo-service:local \
+  code/catalogo-service
+```
 
-No se especifica un mapeo de puertos genérico porque debe corresponder
-a la configuración efectiva de la aplicación.
+Ejemplo para `descuento-service`:
 
-## 10. Ejecución de las pruebas
+```bash
+docker build \
+  -t descuento-service:local \
+  code/descuento-service
+```
 
-### 10.1. Pruebas funcionales
+Estos comandos construyen las imágenes. La ejecución requiere configurar los puertos, las variables de entorno, las dependencias y la conectividad necesarias para cada servicio.
 
-El proyecto se encuentra en:
+La construcción de una imagen no implica que el servicio esté desplegado o integrado con Kubernetes.
 
-`code/pruebas-funcionales/`
+## 12. Ejecución de las pruebas
 
-Para ejecutar las pruebas utilizando la URL configurada en el proyecto:
+### 12.1. Pruebas funcionales
+
+Para ejecutar el proyecto de pruebas funcionales:
 
 ```bash
 mvn -f code/pruebas-funcionales/pom.xml test
 ```
 
-Para especificar otro destino:
+El proyecto debe configurarse para apuntar al entorno que se desea evaluar.
+
+Si el parámetro `base.url` está disponible en la configuración de Maven, puede especificarse de la siguiente manera:
 
 ```bash
 mvn -f code/pruebas-funcionales/pom.xml test \
   -Dbase.url=https://host-de-pruebas.example
 ```
 
-Sustituye el destino de ejemplo por la URL del entorno autorizado
-que deseas evaluar.
+Sustituye el destino de ejemplo por la URL real del entorno autorizado.
 
-Antes de ejecutar las pruebas, comprueba que el servicio esté
-disponible y que la configuración de TLS y las credenciales,
-si fueran necesarias, sean correctas.
+Antes de ejecutar las pruebas, verifica:
 
-Los informes disponibles dependen de la implementación de las
-pruebas y de la configuración de Maven.
+- Que Kong y los servicios necesarios estén disponibles.
+- Que la ruta de la API corresponda a la configuración del entorno.
+- Que las credenciales y los mecanismos de autenticación requeridos estén configurados.
+- Que la configuración TLS sea compatible con el certificado del entorno.
 
-### 10.2. Pruebas de rendimiento
+Los informes disponibles dependen de la configuración y de los mecanismos de generación implementados en el proyecto.
 
-El proyecto se encuentra en:
+### 12.2. Pruebas de rendimiento
 
-`code/prueba-performance/`
-
-Para ejecutar las simulaciones configuradas:
+Para ejecutar las simulaciones configuradas en Gatling:
 
 ```bash
 mvn -f code/prueba-performance/pom.xml gatling:test
 ```
 
-Consulta las simulaciones implementadas antes de ejecutar una prueba
-de carga.
+Consulta el código de las simulaciones para identificar el destino, la duración, los perfiles de carga y las condiciones de ejecución.
 
-Las pruebas de rendimiento deben dirigirse únicamente a entornos
-autorizados y dimensionados para recibir la carga prevista.
+Las pruebas deben dirigirse únicamente a entornos autorizados.
 
-### 10.3. Pruebas de concepto
+Los resultados deben interpretarse considerando los recursos del entorno, la configuración de los servicios y las características de la carga aplicada.
 
-Los proyectos de prueba de concepto se compilan y ejecutan
-independientemente.
+## 13. Estructura del repositorio
 
-Para consultar su configuración:
-
-```bash
-cat code/poc-iva/pom.xml
-
-cat code/poc-prueba-funcional/pom.xml
-```
-
-Los objetivos Maven disponibles y los requisitos de ejecución
-deben verificarse en cada proyecto.
-
-## 11. Estructura del repositorio
+La organización del repositorio es la siguiente:
 
 ```text
 .
 ├── code/
 │   ├── catalogo-service/
-│   │   ├── pom.xml
+│   │   ├── checkstyle.xml
 │   │   ├── Dockerfile
+│   │   ├── pom.xml
 │   │   └── src/
+│   │
 │   ├── descuento-service/
-│   │   ├── pom.xml
+│   │   ├── checkstyle.xml
 │   │   ├── Dockerfile
-│   │   └── src/
-│   ├── productos-service/
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── src/
-│   ├── pruebas-funcionales/
 │   │   ├── pom.xml
 │   │   └── src/
-│   ├── prueba-performance/
+│   │
+│   ├── poc-iva/
 │   │   ├── pom.xml
 │   │   └── src/
+│   │
 │   ├── poc-prueba-funcional/
 │   │   ├── pom.xml
 │   │   └── src/
-│   └── poc-iva/
+│   │
+│   ├── productos-service/
+│   │   ├── checkstyle.xml
+│   │   ├── Dockerfile
+│   │   ├── pom.xml
+│   │   └── src/
+│   │
+│   ├── prueba-performance/
+│   │   ├── pom.xml
+│   │   └── src/
+│   │
+│   └── pruebas-funcionales/
 │       ├── pom.xml
 │       └── src/
+│
 ├── docs/
 │   ├── adr/
-│   ├── security/
-│   │   └── threat-modeling/
-│   └── sdlc-and-tools.md
+│   ├── sdlc-and-tools.md
+│   └── security/
+│       └── threat-modeling/
+│
 └── README.md
 ```
 
-Cada módulo Maven mantiene su propia configuración de construcción.
-No se presupone un proyecto Maven raíz que agregue todos los módulos.
+### Organización
 
-## 12. Documentación técnica
+**`code/`**
 
-La documentación complementaria se encuentra en `docs/`.
+Contiene los microservicios, las pruebas funcionales, las pruebas de rendimiento y las pruebas de concepto.
 
-### Decisiones de arquitectura
+**`docs/`**
 
-Directorio:
+Contiene la documentación técnica relacionada con las decisiones de arquitectura, el ciclo de vida de desarrollo y el modelado de amenazas.
 
-[`docs/adr/`](docs/adr/)
+**`README.md`**
 
-Contiene el espacio destinado a documentar las decisiones de
-arquitectura y sus justificaciones.
+Proporciona el punto de entrada al repositorio y explica su propósito, arquitectura, tecnologías y procedimientos generales de compilación y pruebas.
 
-### Modelado de amenazas
+Cada módulo Maven dispone de su propia configuración. No se presupone un proyecto Maven raíz que coordine la construcción de todos los módulos.
 
-Directorio:
+## 14. Documentación técnica
 
-[`docs/security/threat-modeling/`](docs/security/threat-modeling/)
-
-Espacio destinado a la documentación de amenazas y consideraciones
-de seguridad de los componentes.
-
-### Ciclo de vida de desarrollo y herramientas
+### 14.1. Ciclo de vida de desarrollo y herramientas
 
 Documento:
 
 [`docs/sdlc-and-tools.md`](docs/sdlc-and-tools.md)
 
-Describe la metodología de trabajo y las tecnologías utilizadas
-en el proyecto.
+Consulta este archivo para conocer la documentación relacionada con el ciclo de vida de desarrollo y las herramientas del proyecto.
 
-### Infraestructura
+### 14.2. Decisiones de arquitectura
+
+Directorio:
+
+[`docs/adr/`](docs/adr/)
+
+Este directorio está destinado a registrar las decisiones de arquitectura y sus justificaciones.
+
+Una decisión de arquitectura debería describir el contexto, la decisión tomada, las alternativas consideradas y sus consecuencias.
+
+### 14.3. Modelado de amenazas
+
+Directorio:
+
+[`docs/security/threat-modeling/`](docs/security/threat-modeling/)
+
+Este directorio está destinado a documentar amenazas, superficies de ataque y consideraciones de seguridad de la solución.
+
+### 14.4. Infraestructura
 
 La infraestructura se administra en un repositorio independiente:
 
 [bootcamp-att/infraestructura](https://github.com/bootcamp-att/infraestructura)
 
-Consulta ese repositorio para conocer el aprovisionamiento y la
-configuración del entorno de despliegue.
+Consulta ese repositorio para revisar la configuración de infraestructura y los recursos de despliegue.
 
-## 13. Seguridad
+## 15. Consideraciones de seguridad
 
-Este repositorio forma parte de un ejercicio de formación y
-modernización de aplicaciones.
+La solución forma parte de un ejercicio de desarrollo y modernización de aplicaciones.
 
-Antes de utilizar sus componentes en un entorno productivo,
-es necesario realizar una evaluación específica de seguridad,
-calidad, disponibilidad y operación.
+Antes de utilizar sus componentes en un entorno productivo, es necesario realizar una evaluación de seguridad, disponibilidad, calidad y operación.
 
 Se recomienda:
 
-- No almacenar credenciales, tokens ni claves privadas en el código.
-- No incorporar secretos en archivos versionados.
+- No almacenar credenciales, tokens ni claves privadas en el repositorio.
+- Mantener los secretos fuera de los archivos versionados.
 - Revisar y actualizar las dependencias.
 - Analizar las imágenes de contenedor y sus componentes.
-- Validar los contratos y los mecanismos de autenticación
-  y autorización de las APIs.
-- Revisar el modelado de amenazas.
-- Ejecutar pruebas de seguridad y calidad en el proceso de integración.
-- Documentar las limitaciones y los riesgos conocidos.
+- Validar los contratos y las reglas de acceso de las APIs.
+- Aplicar autenticación y autorización según los requisitos de cada operación.
+- Limitar la exposición de los servicios internos.
+- Documentar las amenazas identificadas y las medidas de mitigación.
+- Incorporar pruebas de seguridad al proceso de desarrollo.
+- Revisar los tiempos de espera, el manejo de errores y la resiliencia de las llamadas entre servicios.
 
-La existencia de herramientas de análisis o archivos de configuración
-no implica, por sí sola, que una aplicación sea segura o cumpla
-un estándar de seguridad.
+La presencia de herramientas de análisis o archivos de configuración no implica, por sí sola, que la solución cumpla un estándar de seguridad o esté preparada para producción.
 
-## 14. Referencias
+## 16. Referencias
 
-- Fowler, M. (2004). *Strangler Fig Application*.
-  https://martinfowler.com/bliki/StranglerFigApplication.html
+### Patrones arquitectónicos
 
-- Microsoft. *Strangler Fig pattern*.
-  https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig
+Fowler, M. (2004). *Strangler Fig Application*.
 
-- Apache Maven. *Maven Getting Started Guide*.
-  https://maven.apache.org/guides/getting-started/
+https://martinfowler.com/bliki/StranglerFigApplication.html
 
-- OpenAPI Initiative. *OpenAPI Specification*.
-  https://spec.openapis.org/oas/latest.html
+Microsoft. (s. f.). *Strangler Fig pattern*.
 
-- REST Assured.
-  https://rest-assured.io/
+https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig
 
-- Gatling. *Documentation*.
-  https://docs.gatling.io/
+### Microservicios
 
-- CycloneDX. *Official documentation*.
-  https://cyclonedx.org/
+Microsoft. (s. f.). *Microservices architecture style*.
+
+https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/microservices
+
+### Contratos de API
+
+OpenAPI Initiative. (s. f.). *OpenAPI Specification*.
+
+https://spec.openapis.org/oas/latest.html
+
+### Herramientas de desarrollo y pruebas
+
+Apache Maven. (s. f.). *Maven documentation*.
+
+https://maven.apache.org/guides/
+
+REST Assured. (s. f.). *REST Assured documentation*.
+
+https://rest-assured.io/
+
+Gatling. (s. f.). *Gatling documentation*.
+
+https://docs.gatling.io/
+
+### Contenedores y orquestación
+
+Docker. (s. f.). *Docker documentation*.
+
+https://docs.docker.com/
+
+Kubernetes. (s. f.). *Kubernetes documentation*.
+
+https://kubernetes.io/docs/
+
+Kong. (s. f.). *Kong Gateway documentation*.
+
+https://docs.konghq.com/gateway/latest/
 
 ---
 
 **Bootcamp EspecializATT**
 
-Repositorio de aplicaciones y pruebas para el ejercicio de migración
-progresiva de una tienda en línea.
+Repositorio de aplicaciones y pruebas para el ejercicio de modernización de una tienda en línea.
